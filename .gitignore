@@ -1,0 +1,32 @@
+# Папки сборки
+build/
+app/build/
+.gradle/
+.kotlin/
+
+# Конфигурации Android Studio
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/assetWizardSettings.xml
+.idea/dictionaries
+.idea/libraries
+.idea/caches
+.idea/shelf
+.idea/modules.xml
+.idea/navEditor.xml
+*.iml
+
+# Локальные файлы разработчика
+local.properties
+.secrets
+.env
+
+# Временные файлы систем и логи
+*.DS_Store
+Thumbs.db
+*.log
+captures/
+.externalNativeBuild/
+.cxx/
+
+.idea/

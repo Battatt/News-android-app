@@ -10,5 +10,5 @@ interface NewsRepository {
     suspend fun removeSubscription(topic: String)
     suspend fun updateArticlesForAllSubscriptions()
     fun getArticlesByTopics(topics: List<String>): Flow<List<Article>>
-    suspend fun clearAllArticles(topic: List<String>)
+    suspend fun clearAllArticles(topics: List<String>)
 }

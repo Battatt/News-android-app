@@ -54,6 +54,7 @@ dependencies {
 
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
     implementation(libs.hilt.android)
+    implementation(libs.androidx.material3)
     ksp(libs.hilt.android.compiler)
 
     implementation(libs.androidx.room3.runtime)
@@ -64,6 +65,8 @@ dependencies {
 
     implementation(libs.retrofit)
     implementation(libs.converter.kotlinx.serialization)
+
+    implementation(libs.androidx.compose.material.icons.extended)
 
 
 

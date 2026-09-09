@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.lifecycleScope
 import com.example.news.data.remote.NewsApiService
+import com.example.news.presentation.screens.subscriptions.SubscriptionsScreen
 import com.example.news.presentation.ui.theme.NewsTheme
 import dagger.hilt.android.AndroidEntryPoint
 import jakarta.inject.Inject
@@ -20,6 +21,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             NewsTheme {
+                SubscriptionsScreen(
+                    onNavigateToSettings = {
+
+                    }
+                )
             }
         }
     }

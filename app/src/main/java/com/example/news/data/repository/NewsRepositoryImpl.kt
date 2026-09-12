@@ -1,7 +1,9 @@
 package com.example.news.data.repository
 
 import android.util.Log
+import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.example.news.data.background.RefreshDataWorker
@@ -10,15 +12,23 @@ import com.example.news.data.local.NewsDao
 import com.example.news.data.local.SubscriptionDbModel
 import com.example.news.data.mapper.toDbModels
 import com.example.news.data.mapper.toEntities
+import com.example.news.data.mapper.toRefreshConfig
 import com.example.news.data.remote.NewsApiService
 import com.example.news.domain.entity.Article
+import com.example.news.domain.entity.RefreshConfig
 import com.example.news.domain.repository.NewsRepository
+import com.example.news.domain.repository.SettingsRepository
 import jakarta.inject.Inject
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
@@ -27,10 +37,21 @@ class NewsRepositoryImpl @Inject constructor(
     private val newsDao: NewsDao,
     private val newsApiService: NewsApiService,
     private val workManager: WorkManager,
+    private val settingsRepository: SettingsRepository  // НИКОГДА ТАК НЕ ДЕЛАТЬ! НЕЧИСТАЯ АРХИТЕКТУРА
 ) : NewsRepository {
 
+    private val scope = CoroutineScope(Dispatchers.IO)
+
     init {
-        startBackgroundRefresh()
+        settingsRepository.getSettings().map {
+            it.toRefreshConfig()
+        }
+            .distinctUntilChanged()
+            .onEach {
+                startBackgroundRefresh(refreshConfig = it)
+            }
+            .launchIn(scope)
+
     }
 
     override fun getAllSubscriptions(): Flow<List<String>> {
@@ -89,10 +110,23 @@ class NewsRepositoryImpl @Inject constructor(
         newsDao.deleteArticlesByTopics(topics)
     }
 
-    private fun startBackgroundRefresh() {
+    private fun startBackgroundRefresh(refreshConfig: RefreshConfig) {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(
+                if (refreshConfig.isWifiOnly) {
+                    NetworkType.UNMETERED
+                } else {
+                    NetworkType.CONNECTED
+                }
+            )
+            .setRequiresBatteryNotLow(true)
+            .build()
+
         val request = PeriodicWorkRequestBuilder<RefreshDataWorker>(
-            repeatInterval = 15L, TimeUnit.MINUTES,
-        ).build()
+            repeatInterval = refreshConfig.interval.minutes.toLong(), TimeUnit.MINUTES,
+        )
+            .setConstraints(constraints)
+            .build()
 
         workManager.enqueueUniquePeriodicWork(
             uniqueWorkName = "Refresh data",
